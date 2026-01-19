@@ -1,4 +1,4 @@
-mautomodgenerator.command.rebuild.success=Successfully rebuilt the mod ZIP file
-mautomodgenerator.command.rebuild.error=Failed to rebuild the mod ZIP file
-mautodmodgenerator.command.rebuild.usage=Usage: /rebuildmod <mod>
-mautodmodgenerator.command.rebuild.description=Rebuild a mod ZIP file
+command.rebuild.success=Successfully rebuilt the mod ZIP file
+command.rebuild.error=Failed to rebuild the mod ZIP file
+command.rebuild.usage=Usage: /rebuildmod <mod>
+command.rebuild.description=Rebuild a mod ZIP file

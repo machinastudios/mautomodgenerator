@@ -16,5 +16,5 @@
     "OptionalDependencies": {},
     "Dependencies": {},
     "DisabledByDefault": false,
-    "IncludesAssetPack": false
+    "IncludesAssetPack": true
 }
