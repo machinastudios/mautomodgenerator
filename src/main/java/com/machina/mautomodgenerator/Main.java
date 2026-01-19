@@ -3,13 +3,12 @@ package com.machina.mautomodgenerator;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -18,6 +17,7 @@ import javax.annotation.Nonnull;
 
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.machina.mautomodgenerator.commands.CommandHandler;
+import com.machina.mautomodgenerator.model.ModFile;
 import com.machina.shared.SuperPlugin;
 import com.machina.shared.config.ModConfig;
 import com.machina.shared.factory.ModLogger;
@@ -134,6 +134,9 @@ public class Main extends SuperPlugin {
         // Build the mod manifest
         ModManifest manifest = buildModManifest();
 
+        // Set the manifest main - use fixed package path
+        String dummyMainPath = "com/machina/mautomodgenerator/DummyMain.class";
+
         // Create the .jar (zip) file name
         // "Why not using .zip?"
         // Because Hytale doesn't like reloading .zip files
@@ -156,15 +159,19 @@ public class Main extends SuperPlugin {
             zipOutputStream.write(manifest.toJsonString().getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
 
+            // Add the DummyMain.class file to the ZIP
+            // This is needed so the generated mod can load the class when it's loaded
+            addDummyMainClass(zipOutputStream, dummyMainPath);
+
             // Add the files to the ZIP
             for (ModFile file : files) {
                 // Get the file name related to the root
                 logger.info("File %s -> %s", file.getRelativePath(), file.getFile().getPath());
 
                 // Add the file to the ZIP
-                ZipEntry zipEntry = new ZipEntry(file.getRelativePath());
+                ZipEntry zipEntry = file.toZipEntry();
                 zipOutputStream.putNextEntry(zipEntry);
-                zipOutputStream.write(Files.readAllBytes(file.getFile().toPath()));
+                zipOutputStream.write(file.readBytes());
                 zipOutputStream.closeEntry();
             }
         } catch (IOException e) {
@@ -256,7 +263,7 @@ public class Main extends SuperPlugin {
         // Should always include the asset pack
         manifest.IncludesAssetPack = true;
 
-        // Fake plugin main
+        // Fake plugin main - keep it fixed to the original package
         manifest.Main = "com.machina.mautomodgenerator.DummyMain";
 
         // Create the author
@@ -267,50 +274,61 @@ public class Main extends SuperPlugin {
         // Return the manifest
         return manifest;
     }
-}
-
-class ModFile {
-    /**
-     * The file
-     */
-    private File file;
 
     /**
-     * The relative path
+     * Add the DummyMain.class file to the generated mod ZIP
+     * This ensures the class is available when the mod is loaded
+     * 
+     * @param zipOutputStream The ZIP output stream to add the class to
+     * @param classPath The target path for the class file in the ZIP (fixed to com/machina/mautomodgenerator/DummyMain.class)
      */
-    private File root;
+    private void addDummyMainClass(ZipOutputStream zipOutputStream, String classPath) {
+        try {
+            // Try multiple approaches to get the class file
+            String existingClassPath = "com/machina/mautomodgenerator/DummyMain.class";
+            InputStream classInputStream = null;
 
-    /**
-     * Constructor
-     * @param file The file
-     * @param relativePath The relative path
-     */
-    public ModFile(File file, File root) {
-        this.file = file;
-        this.root = root;
-    }
+            // First, try to get it as a resource from the classloader
+            classInputStream = getClass().getClassLoader().getResourceAsStream(existingClassPath);
+            
+            // If that fails, try using DummyMain.class directly
+            if (classInputStream == null) {
+                classInputStream = DummyMain.class.getResourceAsStream("/" + existingClassPath);
+            }
 
-    /**
-     * Get the relative path
-     * @return The relative path
-     */
-    public String getRelativePath() {
-        return file.getPath().replace(root.getPath() + File.separator, "");
-    }
+            // If still null, try without the leading slash
+            if (classInputStream == null) {
+                classInputStream = DummyMain.class.getResourceAsStream("DummyMain.class");
+            }
 
-    /**
-     * Get the file
-     * @return The file
-     */
-    public File getFile() {
-        return file;
-    }
+            // If still null, try from the current class's classloader
+            if (classInputStream == null) {
+                classInputStream = Main.class.getResourceAsStream("/" + existingClassPath);
+            }
 
-    /**
-     * Get the root
-     * @return The root
-     */
-    public File getRoot() {
-        return root;
+            if (classInputStream == null) {
+                logger.warn("Could not find DummyMain.class resource. The generated mod may not be able to load the DummyMain class.");
+                logger.warn("Tried paths: %s, /%s, DummyMain.class", existingClassPath, existingClassPath);
+                return;
+            }
+
+            // Create the ZIP entry for the class file
+            ZipEntry classEntry = new ZipEntry(classPath);
+            zipOutputStream.putNextEntry(classEntry);
+
+            // Copy the class file bytes to the ZIP (no modification needed - using original package)
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = classInputStream.read(buffer)) != -1) {
+                zipOutputStream.write(buffer, 0, bytesRead);
+            }
+
+            zipOutputStream.closeEntry();
+            classInputStream.close();
+
+            logger.debug("Added DummyMain.class to the generated mod ZIP at %s", classPath);
+        } catch (IOException e) {
+            logger.error("Failed to add DummyMain.class to the mod ZIP: %t", e);
+        }
     }
 }
