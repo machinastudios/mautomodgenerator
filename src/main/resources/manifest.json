@@ -1,0 +1,20 @@
+{
+    "Group": "com.machina",
+    "Name": "mautomodgenerator",
+    "Version": "1.0.0",
+    "Description": "Automated mod generator for Hytale",
+    "Main": "com.machina.mautomodgenerator.Main",
+    "Authors": [
+      {
+        "Name": "Machina Studios",
+        "Email": "machina@hytalento.com",
+        "Url": "https://hytalento.com"
+      }
+    ],
+    "Website": "https://hytalento.com",
+    "ServerVersion": "*",
+    "OptionalDependencies": {},
+    "Dependencies": {},
+    "DisabledByDefault": false,
+    "IncludesAssetPack": false
+}
