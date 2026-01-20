@@ -47,7 +47,7 @@ public class Main extends SuperPlugin {
         super(init);
     }
 
-    public void start() {
+    public void init() {
         // Save the instance
         INSTANCE = this;
 
