@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -259,6 +260,10 @@ public class Main extends SuperPlugin {
         manifest.Version = modVersion;
         manifest.Description = modDescription;
         manifest.Authors = new ArrayList<>();
+
+        // Should include ourselves as a dependency
+        manifest.Dependencies = new HashMap<>();
+        manifest.Dependencies.put("com.machina:mautomodgenerator", "*");
 
         // Should always include the asset pack
         manifest.IncludesAssetPack = true;
