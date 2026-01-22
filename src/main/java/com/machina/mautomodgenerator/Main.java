@@ -20,7 +20,7 @@ import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.machina.mautomodgenerator.commands.CommandHandler;
 import com.machina.mautomodgenerator.model.ModFile;
 import com.machina.shared.SuperPlugin;
-import com.machina.shared.config.ModConfig;
+import com.machina.shared.config.ConfigurationFile;
 import com.machina.shared.factory.ModLogger;
 import com.machina.shared.util.ModJarUtils.ModManifest;
 
@@ -41,7 +41,7 @@ public class Main extends SuperPlugin {
     /**
      * The config for the mod
      */
-    private final ModConfig config = ModConfig.forMod(this);
+    private final ConfigurationFile config = ConfigurationFile.forMod(this);
 
     public Main(@Nonnull JavaPluginInit init) {
         super(init);
